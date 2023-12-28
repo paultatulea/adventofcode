@@ -93,6 +93,32 @@ fn solution(s: &str) -> String {
         let z2 = z2 - z_centroid;
         let z3 = z3 - z_centroid;
 
+        /*
+        * Given an equation for one hail intersecting with the rock.
+        * p * v * t_i = p_i * v_i * t_i
+        * Where p and v are the position and velocity vectors
+        * and t_i is a scalar, the time of intersection.
+        * (p - p_i) = -t_i * (v - v_i)
+        * Then, since (p - p_i) is a scalar multiple (-t_i) of (v - v_i)
+        * we know that the cross product is 0 of the two vectors. Each
+        * component of the cross product must be equal to 0.
+        * For example, take the x component of the cross product for the first and second hail.
+        * (y - y1) * (dz - dz1) - (z - z1) * (dy - dy1) = 0
+        * (y - y2) * (dz - dz2) - (z - z2) * (dy - dy2) = 0
+        * Expand terms and note the non-linear terms can be eliminated by subtracting the second from the first.
+        * Then, collect like terms with unknowns x, y, z, dx, dy, dz on the left, and constants on
+        * the right.
+        * (dz2 - dz1) * y + (dy2 - dy1) * z + (z2 - z1) * dy + (y2 - y1) * dz = y2 * dz2 - y1 * dz1
+        * + z2 * dy2 - z1 * dy1
+        * Repeating the process will result in 6 linear equations and 6 unknowns which is solvable in
+        * the standard linear algebra matrix equation Ax = b.
+        *
+        * NOTE: There is some numerical inaccuracy here because of large numbers.
+        * Truncating the result x, y, z gives me the correct answer on my data.
+        * It may also be more accurate to keep all values as integers while calculating A and b, then
+        * converting to float at the end.
+        */
+
         let a = matrix![
             dy2 - dy1, dx1 - dx2, 0.0, y1 - y2, x2 - x1, 0.0;
             dy3 - dy1, dx1 - dx3, 0.0, y1 - y3, x3 - x1, 0.0;
@@ -110,8 +136,6 @@ fn solution(s: &str) -> String {
             (z1 * dy1 - z3 * dy3) - (y1 * dz1 - y3 * dz3),
         ];
 
-        // NOTE: There is some numerical inaccuracy here because of large numbers.
-        // Truncating the result x, y, z gives me the correct answer on my data.
         let result = a.lu().solve(&b).unwrap();
         println!("Result = {result:?}");
         let ans_x = result[0] + x_centroid;
